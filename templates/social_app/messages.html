@@ -1,0 +1,31 @@
+{% extends 'social_app/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">Messages</h2>
+            <div class="card">
+                <div class="card-body">
+                    {% for message in messages %}
+                    <div class="d-flex mb-3 {% if message.sender == request.user %}justify-content-end{% endif %}">
+                        <div class="card {% if message.sender == request.user %}bg-primary text-white{% else %}bg-light{% endif %}" style="max-width: 70%;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <img src="{{ message.sender.profile.profile_pic.url }}" class="profile-pic me-2">
+                                    <strong>{{ message.sender.username }}</strong>
+                                </div>
+                                <p class="mb-1">{{ message.content }}</p>
+                                <small class="text-muted">{{ message.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center">No messages yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

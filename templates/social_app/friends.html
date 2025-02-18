@@ -1,0 +1,143 @@
+{% extends 'social_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-4 friends-page-title">Friends</h2>
+
+            <!-- Pending Friend Requests -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Pending Friend Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div id="pending-requests-list">
+                        {% for request in pending_requests %}
+                        <div class="d-flex align-items-center mb-3 friend-request" data-request-id="{{ request.id }}">
+                            <img src="{% if request.from_user.profile.profile_pic %}{{ request.from_user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}"
+                                 alt="{{ request.from_user.get_full_name|default:request.from_user.username }}'s Profile"
+                                 class="profile-pic rounded-circle me-3">
+                            <div>
+                                <h6 class="mb-0">{{ request.from_user.get_full_name|default:request.from_user.username }}</h6>
+                            </div>
+                            <div class="ms-auto">
+                                <button class="btn btn-sm btn-success accept-btn me-2" data-request-id="{{ request.id }}">Accept</button>
+                                <button class="btn btn-sm btn-danger decline-btn" data-request-id="{{ request.id }}">Decline</button>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center mb-0">No pending friend requests.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Friends -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Your Friends</h5>
+                </div>
+                <div class="card-body">
+                    <div id="friends-list">
+                    {% for friend in friends %}
+                                        <div class="d-flex align-items-center mb-3 friend">
+                        <a href="{% url 'user_profile' friend.id %}">
+                            <img src="{% if friend.profile.profile_pic %}{{ friend.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}"
+                                 alt="{{ friend.get_full_name|default:friend.username }}'s Profile"
+                                 class="profile-pic rounded-circle me-3">
+                        </a>
+                        <div>
+                            <h6 class="mb-0">
+                               <a href="{% url 'user_profile' friend.id %}" style="text-decoration: none; color: inherit;">
+                                    {{ friend.get_full_name|default:friend.username }}
+                                </a>
+                            </h6>
+                           <small class="text-muted">{{ friend.created_at|date:"F j, Y" }}</small>
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <p class="text-center mb-0">You have no friends yet.</p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pendingRequestsList = document.getElementById('pending-requests-list');
+
+        pendingRequestsList.addEventListener('click', function(event) {
+            if (event.target.classList.contains('accept-btn')) {
+                handleFriendRequest(event.target, 'accept');
+            } else if (event.target.classList.contains('decline-btn')) {
+                handleFriendRequest(event.target, 'decline');
+            }
+        });
+
+        function handleFriendRequest(button, action) {
+            const requestId = button.dataset.requestId;
+            if (!requestId) {
+                console.error("Request ID not found!");
+                return;
+            }
+
+            fetch(`/friends/request/${requestId}/${action}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ request_id: requestId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove the request element from the DOM
+                    const requestElement = button.closest('.friend-request');
+                    if (requestElement) {
+                        requestElement.remove();
+                    }
+
+                    // updatePendingRequestCount();
+
+                } else {
+                    alert(data.message || 'An error occurred.');
+                }
+            })
+            .catch(error => {
+                console.error('Error handling friend request:', error);
+                alert('An error occurred while processing your request.');
+            });
+        }
+
+         function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+
+</script>
+{% endblock %}

@@ -1,0 +1,455 @@
+{% extends 'social_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="feed-container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- User Profile Section in Feed -->
+    <div class="feed-profile-section">
+        <div class="feed-profile-header">
+            <h2>Your Profile</h2>
+        </div>
+        <div class="feed-profile-body">
+            <div class="feed-profile-image">
+                <img src="{% if user.profile.profile_pic %}{{ user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}" alt="Your Profile Picture" class="feed-profile-pic">
+            </div>
+            <div class="feed-profile-info">
+                <h3 class="feed-profile-name">{{ user.get_full_name }}</h3>
+                <p class="feed-profile-username">@{{ user.username }}</p>
+                <p class="feed-profile-bio">{{ user.profile.bio|default:"No bio available." }}</p>
+
+                <a href="{% url 'settings' %}" class="btn btn-outline-secondary btn-sm feed-profile-settings-btn">Edit Profile</a>
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_authenticated %}
+    <!-- Post Creation -->
+    <div class="post-create">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'create_post' %}" >
+            {% csrf_token %}
+            <div class="post-input-wrapper">
+                <img src="{% if user.profile.profile_pic %}{{ user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}" alt="Profile" class="profile-pic">
+                <div class="input-and-previews">
+                    <textarea name="content" placeholder="Share your thoughts..." required></textarea>
+                    <div class="preview-area">
+                        <div class="preview-container" id="image-preview-container">
+
+                        </div>
+                        <div class="preview-container" id="file-preview-container">
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="post-actions">
+                <div class="preview-container" id="file-preview-container">
+
+                </div>
+
+                <input type="file" name="file" id="file-input" hidden>
+                <button type="button" class="action-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-file"></i> File
+                </button>
+
+                <input type="file" name="image" id="image-input" accept="image/*" hidden>
+                <button type="button" class="action-btn" onclick="document.getElementById('image-input').click()">
+                    <i class="fas fa-image"></i> Image
+                </button>
+
+                <input type="text" name="location" id="location-input" placeholder="Add location" hidden>
+                <button type="button" class="action-btn" onclick="getLocation()">
+                    <i class="fas fa-map-marker-alt"></i> Location
+                </button>
+
+                <select name="visibility" class="action-btn">
+                    <option value="public">Public</option>
+                    <option value="friends">Friends</option>
+                    <option value="private">Private</option>
+                </select>
+
+                <button type="submit" class="action-btn send-btn">Send</button>
+
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Posts Feed -->
+    {% for post in posts %}
+    <div class="post" id="post-{{ post.id }}">
+        <div class="post-header">
+        <img src="{% if post.user.profile.profile_pic %}{{ post.user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}" alt="Profile" class="profile-pic">
+            <div class="post-user-info">
+                <h4>{{ post.user.get_full_name }}</h4>
+                <span>{{ post.created_at|timesince }} ago</span>
+                {% if post.location %}
+                    <span class="location"><i class="fas fa-map-marker-alt"></i> {{ post.location }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+         <div class="post-content">
+            <p>{{ post.content }}</p>
+
+            {% if post.image %}
+            <div class="post-images">
+                <img src="{{ post.image.url }}" alt="Post image" class="post-image-preview">
+            </div>
+            {% endif %}
+
+            {% if post.file %}
+            <div class="post-file">
+                <a href="{{ post.file.url }}" target="_blank" class="file-link">
+                    <i class="fas fa-file"></i> View File
+                </a>
+                {% if post.file_preview %}
+                <div class="file-preview">
+                    <p class="file-preview-text">{{ post.file_preview|truncatechars:150 }}</p>
+                    {% if post.file_preview|length > 150 %} <span class="preview-more">...</span> {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="post-stats">
+                <!-- Like Button -->
+                <button
+                    id="like-btn-{{ post.id }}"
+                    class="stat-btn like-btn {% if user.is_authenticated and user in post.likes.all %}liked{% endif %}"
+                    onclick="like_post({{ post.id }})"
+                >
+                    <!-- Heart Icon -->
+                    <i class="{% if user.is_authenticated and user in post.likes.all %}fas{% else %}far{% endif %} fa-heart"></i>
+                    <!-- Likes Count -->
+                    <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span>
+                </button>
+
+                <!-- Other buttons -->
+                <button class="stat-btn" onclick="{% if user.is_authenticated %}toggleComments({{ post.id }}){% else %}redirectToLogin(){% endif %}">
+                    <i class="far fa-comment"></i>
+                    <span>{{ post.comments.count }}</span>
+                </button>
+                <span class="stat-btn">
+                    <i class="far fa-eye"></i>
+                    <span>{{ post.views.count }}</span>
+                </span>
+            </div>
+
+       <!-- Comments Section -->
+        <div class="comments-section" id="comments-{{ post.id }}" style="display: none;">
+            <div class="comments-list" id="comment-list-{{ post.id }}">
+                {% for comment in post.comments.all %}
+                <div class="comment">
+                    <div class="comment-header">
+                        <strong>{{ comment.user.get_full_name }}</strong>
+                        <small>{{ comment.created_at|timesince }} ago</small>
+                    </div>
+                    <div class="comment-content">{{ comment.content }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'add_comment' post.id %}" class="comment-form" id="comment-form-{{ post.id }}">
+                {% csrf_token %}
+                <div class="comment-input">
+                    {{ comment_form.content }} <button type="submit">Post</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="login-prompt">
+                <p>Please <a href="{% url 'login' %}">login</a> to comment</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="no-posts">No posts yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block right_sidebar %}
+    <!-- Stories Section -->
+    <section class="stories">
+        <h2>Stories</h2>
+        <div class="story-items">
+            {% for story in stories %}
+            <div class="story-item">
+                <img src="{% if story.user.profile.profile_pic %}{{ story.user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}" alt="Story">
+                <p>{{ story.user.get_full_name }}</p>
+                {% if story.post.image %}
+                <img src="{{ story.post.image.url }}" alt="Story Image">
+                {% endif %}
+                <p>{{ story.post.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+        <!-- Suggestions Section -->
+            <section class="suggestions">
+                <h3>Suggestions</h3>
+                <div class="suggestion-items">
+                    {% for suggested_user in suggested_users %}
+                    <div class="suggestion-item card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <img src="{% if suggested_user.profile.profile_pic %}{{ suggested_user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}" alt="Suggestion" class="profile-pic rounded-circle me-3">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-1">{{ suggested_user.get_full_name }}</h5>
+                                    <p class="card-text text-muted mb-1">@{{ suggested_user.username }}</p>
+                                     <p class="card-text bio mb-1">
+                                       {{ suggested_user.profile.bio|default:"No bio available." }}
+                                     </p>
+                                    <p class="card-text small mb-0">
+                                        Followers: {{ suggested_user.profile.followers.count }} | Following: {{ suggested_user.profile.following.count }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <form method="post" action="{% url 'follow_user' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_id" value="{{ suggested_user.id }}">
+                                        <button type="submit" class="btn btn-sm {% if suggested_user in user.profile.following.all %}btn-secondary{% else %}btn-primary{% endif %}">
+                                            {% if suggested_user in user.profile.following.all %}
+                                                Unfollow
+                                            {% else %}
+                                                Follow
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                    {% empty %}
+                      <p>No suggestions available at this time.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+    <!-- Recommendations Section -->
+    <section class="recommendations">
+        <h2>Recommendations</h2>
+        <div class="recommendation-items">
+            {% for recommendation in recommended_posts %}
+            <div class="recommendation-item">
+                <img src="{{ recommendation.image.url }}" alt="Recommendation">
+                <p>{{ recommendation.title }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+    <script>
+    console.log("Home-specific JavaScript loaded!");
+
+
+    function getLocation() {
+        const locationInput = document.getElementById('location-input');
+        locationInput.value = prompt("Enter your location:");
+        locationInput.removeAttribute('hidden');
+    }
+
+    function toggleComments(postId) {
+        const commentsSection = document.getElementById(`comments-${postId}`);
+        commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function redirectToLogin() {
+        window.location.href = "{% url 'login' %}";
+    }
+
+    document.getElementById('image-input').addEventListener('change', function(event) {
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        imagePreviewContainer.innerHTML = '';
+
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.classList.add('upload-preview-image');
+                imagePreviewContainer.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('file-input').addEventListener('change', function(event) {
+        const filePreviewContainer = document.getElementById('file-preview-container');
+        filePreviewContainer.innerHTML = '';
+
+        const file = event.target.files[0];
+        if (file) {
+            const fileInfo = document.createElement('div');
+            fileInfo.classList.add('upload-preview-file');
+
+            const fileIcon = document.createElement('i');
+            fileIcon.classList.add('fas', 'fa-file');
+            fileInfo.appendChild(fileIcon);
+
+            const fileNameSpan = document.createElement('span');
+            fileNameSpan.textContent = file.name;
+            fileInfo.appendChild(fileNameSpan);
+
+            filePreviewContainer.appendChild(fileInfo);
+        }
+    });
+
+    function like_post(postId) {
+    console.log(`Liking post with ID: ${postId}`);
+    const likeBtn = document.getElementById(`like-btn-${postId}`);
+    const likeIcon = likeBtn.querySelector('i');
+    const likesCountSpan = document.getElementById(`like-count-${postId}`);
+
+     fetch(`/like_post/${postId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Server response data:", data);
+        if (data.liked) {
+            likeIcon.classList.remove('far');
+            likeIcon.classList.add('fas');
+        } else {
+            likeIcon.classList.remove('fas');
+            likeIcon.classList.add('far');
+        }
+        likesCountSpan.textContent = data.likes_count;
+        console.log("UI updated:", {liked: data.liked, likes_count: data.likes_count});
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+    }
+
+     function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        console.log(`CSRF Token: ${cookieValue}`);
+        return cookieValue;
+    }
+
+     console.log("Document Ready function started!");
+
+    $(document).ready(function() {
+        console.log("Document is ready!");
+        $('.comment-form').on('submit', function(e){
+             console.log("Comment form submit event triggered!");
+            e.preventDefault();
+            const form = $(this);
+            const postId = form.closest('.post').attr('id').split('-')[1];
+            const commentList = $(`#comment-list-${postId}`);
+            $.ajax({
+                type: form.attr('method'),
+                url: form.attr('action'),
+                data: form.serialize(),
+                dataType: 'json',
+                success: function(data) {
+                    if (data.status === 'success') {
+                        const newCommentElement = createCommentElement(data);
+                        commentList.append(newCommentElement);
+                        form[0].reset();
+                        showNotification('Comment added successfully!');
+                    } else {
+                        showNotification('Error adding comment.');
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    console.error("AJAX error:", textStatus, errorThrown);
+                    showNotification('AJAX error adding comment.');
+                }
+            });
+        });
+
+
+
+
+
+        function createCommentElement(data) {
+            const div = document.createElement('div');
+            div.className = 'comment';
+            div.innerHTML = `
+                <div class="comment-header">
+                    <strong>${data.username}</strong>
+                    <small>${data.created_at}</small>
+                </div>
+                <div class="comment-content">${data.content}</div>
+            `;
+            return div;
+        }
+
+        function showNotification(message) {
+
+            console.log(message);
+        }
+    });
+
+function toggleFollow(button) {
+    console.log("toggleFollow function CALLED!");
+        const userId = button.dataset.userId;
+
+        fetch('/follow_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `user_id=${userId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Update the button text
+                button.textContent = data.followed ? 'Unfollow' : 'Follow';
+
+                // Update the follower count (if available)
+                const followerCountElement = button.closest('.suggestion-item').querySelector('.followers-count');
+                if (followerCountElement) {
+                    followerCountElement.textContent = data.followers_count;
+                }
+            } else {
+                console.error('Error toggling follow:', data.message);
+            }
+        })
+        .catch(error => console.error('Error toggling follow:', error));
+    }
+    console.log("Document Ready function ended!");
+</script>
+{% endblock extra_js %}

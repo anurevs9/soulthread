@@ -1,0 +1,21 @@
+{% extends 'social_app/base.html' %}
+
+{% block title %}Send Message to {{ receiver.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Send a Message to {{ receiver.username }}</h2>
+    <form method="POST" action="{% url 'send_message' receiver_id=receiver.id %}" class="mt-4">
+        {% csrf_token %}
+        
+        <!-- Display the form -->
+        <div class="mb-3">
+            <label for="id_content" class="form-label">Message:</label>
+            <textarea name="content" id="id_content" class="form-control" rows="4" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Send Message</button>
+        <a href="{% url 'messages' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

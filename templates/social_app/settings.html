@@ -1,0 +1,70 @@
+{% extends 'social_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="settings-page container my-4">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <header class="settings-header mb-4">
+                <h2 class="settings-title">Settings</h2>
+            </header>
+
+            <!-- Profile Settings -->
+            <section class="settings-section profile-settings mb-5">
+                <div class="settings-section-header">
+                    <h3 class="settings-section-title">Profile Settings</h3>
+                </div>
+                <div class="settings-section-body">
+                    <form method="POST" enctype="multipart/form-data" class="profile-form settings-form">
+                        {% csrf_token %}
+                        <div class="mb-3 form-group">
+                            <label class="form-label" for="{{ profile_form.profile_pic.id_for_label }}">Profile Picture</label>
+                            <div class="current-profile-pic mb-2">
+                                <img src="{% if user.profile.profile_pic %}{{ user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}" alt="Current Profile Picture" class="profile-pic-preview">
+                            </div>
+                            {{ profile_form.profile_pic }}
+                        </div>
+                        <div class="mb-3 form-group">
+                            <label class="form-label" for="{{ profile_form.bio.id_for_label }}">Bio</label>
+                            {{ profile_form.bio }}
+                        </div>
+                        <button type="submit" name="profile_submit" class="btn btn-primary btn-save-profile">Save Profile Changes</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Account Settings -->
+            <section class="settings-section account-settings">
+                <div class="settings-section-header">
+                    <h3 class="settings-section-title">Account Settings</h3>
+                </div>
+                <div class="settings-section-body">
+                    <form method="POST" class="account-form settings-form">
+                        {% csrf_token %}
+                        <div class="mb-3 form-group">
+                            <label class="form-label" for="{{ account_form.email.id_for_label }}">Email</label>
+                            {{ account_form.email }}
+                        </div>
+                        <div class="mb-3 form-group">
+                            <label class="form-label" for="{{ account_form.password.id_for_label }}">New Password (leave blank to keep current)</label>
+                             {{ account_form.password }}
+                        </div>
+                        <button type="submit" name="account_submit" class="btn btn-primary btn-update-account">Update Account</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+{% endblock %}
+s

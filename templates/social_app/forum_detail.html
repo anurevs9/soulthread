@@ -1,0 +1,54 @@
+{% extends 'social_app/base.html' %}
+
+{% block content %}
+<main class="forum-detail-page container my-4">
+    <div class="forum-header mb-4">
+        <h1 class="forum-detail-title">{{ forum.title }}</h1>
+        <p class="forum-detail-meta">
+            Created by: <span class="forum-detail-author">{{ forum.created_by.get_full_name}}</span>
+            (<span class="forum-detail-time">{{ forum.created_at|timesince }} ago</span>)
+        </p>
+        <p class="forum-detail-description">{{ forum.description }}</p>
+        <hr class="forum-separator">
+    </div>
+
+    <section class="forum-posts mb-4">
+        <h2 class="forum-posts-title mb-3">Posts</h2>
+        <div class="forum-posts-list">
+            {% for post in posts %}
+            <div class="card forum-post-card mb-3">
+                <div class="card-body forum-post-body">
+                    <p class="forum-post-content">{{ post.content }}</p>
+                    <footer class="forum-post-meta">
+                        <span class="forum-post-author text-muted">
+                            Posted by {{ post.user.username }}
+                        </span>
+                        <small class="forum-post-time text-muted">
+                            ({{ post.created_at|timesince }} ago)
+                        </small>
+                    </footer>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted no-posts">No posts yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="forum-add-post">
+        <h3 class="forum-add-post-title mb-3">Add a Post</h3>
+        <div class="card forum-add-post-card">
+            <div class="card-body forum-add-post-body">
+                <form method="POST" class="forum-post-form">
+                    {% csrf_token %}
+                    <div class="mb-3 forum-form-group">
+                        {{ form.content.label_tag }}
+                        {{ form.content }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-forum-post">Post</button>
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

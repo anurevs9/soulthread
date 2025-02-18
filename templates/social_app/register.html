@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SoulThread</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+</head>
+<body class="register-page">
+    <main class="register-container">
+        <section class="register-form-section">
+            <div class="logo-container d-flex align-items-center mb-4">
+                <img src="{% static 'images/677.png' %}" alt="Logo" class="logo">
+                <h4 class="mb-0 ms-2">SoulThread</h4>
+            </div>
+            <h5 class="mb-3">Sign Up</h5>
+            <p class="text-muted small mb-4">
+                Signup for a new account.<br>
+                Thank you for connecting with us.
+            </p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="id_first_name" class="form-label">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_last_name" class="form-label">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="id_email" class="form-label">Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_phone_number" class="form-label">Phone Number</label>
+                    {{ form.phone_number }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_password1" class="form-label">Password</label>
+                    {{ form.password1 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_password2" class="form-label">Confirm Password</label>
+                    {{ form.password2 }}
+                </div>
+
+                <div class="form-check mb-3 terms-checkbox">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label small" for="terms">
+                        Agree to the Terms and Conditions of SoulThread
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-signup w-100">SIGN UP</button>
+            </form>
+
+            <p class="text-center mt-3">
+                Already have an account? <a href="{% url 'login' %}" class="text-decoration-none">Login Now</a>
+            </p>
+        </section>
+        <section class="register-image-section" style="background-image: url('{% static 'images/63.jpg' %}');">
+        </section>
+    </main>
+</body>
+</html>

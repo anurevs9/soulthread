@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('SoulThread Admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">SoulThread Administration</a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    #header {
+        background: #343a40;
+        color: white;
+    }
+    #branding h1 {
+        color: white;
+    }
+    .module h2, .module caption, .inline-group h2 {
+        background: #007bff;
+    }
+    div.breadcrumbs {
+        background: #007bff;
+    }
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: #007bff;
+    }
+    .button:hover, input[type=submit]:hover, input[type=button]:hover {
+        background: #0056b3;
+    }
+    .button.default, input[type=submit].default, .submit-row input.default {
+        background: #28a745;
+    }
+    .button.default:hover, input[type=submit].default:hover {
+        background: #218838;
+    }
+</style>
+{% endblock %}

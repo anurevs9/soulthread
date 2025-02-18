@@ -1,0 +1,67 @@
+{% extends 'social_app/base.html' %}
+
+{% block content %}
+<main class="forum-page container my-4">
+  <div class="row">
+    <!-- Forums Listing -->
+    <section class="col-md-8 forum-list">
+      <header class="forum-list-header mb-4">
+        <h2 class="forum-list-title">Forums</h2>
+      </header>
+      <div class="forum-items">
+        {% for forum in forums %}
+        <article class="card forum-card mb-3">
+          <div class="card-body forum-card-body">
+            <!-- Forum Title -->
+            <header class="forum-header mb-2">
+              <h5 class="card-title forum-title">
+                  {{ forum.title }}
+              </h5>
+            </header>
+            <!-- Forum Description -->
+            <section class="forum-description mb-3">
+              <p class="card-text forum-text">{{ forum.description }}</p>
+            </section>
+            <!-- Forum Meta Information -->
+            <footer class="forum-meta">
+              <div class="meta-item meta-author">
+                <span class="meta-label">Created by:</span>
+                <span class="meta-value">{{ forum.created_by.get_full_name }}</span>
+              </div>
+              <div class="meta-item meta-time">
+                <small class="text-muted">{{ forum.created_at|timesince }} ago</small>
+              </div>
+            </footer>
+          </div>
+        </article>
+        {% empty %}
+        <p class="text-muted no-forums">No forums yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Forum Creation Form -->
+    <aside class="col-md-4 forum-create">
+      <div class="card forum-create-card">
+        <div class="card-header forum-create-header bg-primary text-white">
+          <h5 class="card-title forum-create-title mb-0">Create New Forum</h5>
+        </div>
+        <div class="card-body forum-create-body">
+          <form method="POST" class="forum-form">
+            {% csrf_token %}
+            <div class="mb-3 forum-form-group">
+              {{ form.title.label_tag }}
+              {{ form.title }}
+            </div>
+            <div class="mb-3 forum-form-group">
+              {{ form.description.label_tag }}
+              {{ form.description }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-create-forum w-100">Create Forum</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+{% endblock %}

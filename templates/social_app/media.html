@@ -1,0 +1,144 @@
+{% extends 'social_app/base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<main class="container my-4">
+  <div class="row">
+    <!-- Media Gallery Section -->
+    <section class="col-lg-8 mb-4">
+      <header class="media-gallery-header d-flex justify-content-between align-items-center mb-3">
+        <h2 class="media-gallery-title">Media Gallery</h2>
+        <!-- Ordering Controls -->
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary dropdown-toggle order-btn" type="button" id="orderDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Order By
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="orderDropdown">
+            <li><a class="dropdown-item" href="?order=latest">Latest</a></li>
+            <li><a class="dropdown-item" href="?order=oldest">Oldest</a></li>
+          </ul>
+        </div>
+      </header>
+      <div class="row media-grid">
+        {% for item in media %}
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card media-card h-100">
+            {% if item.file.url|is_image %}
+              <img src="{{ item.file.url }}"
+                   class="card-img-top media-img"
+                   alt="{{ item.title }}"
+                   data-bs-toggle="modal"
+                   data-bs-target="#mediaModal"
+                   data-img-src="{{ item.file.url }}">
+            {% else %}
+              <div class="card-img-top bg-light text-center py-5 file-icon-container">
+                <i class="fas fa-file fa-3x text-muted file-icon"></i>
+              </div>
+            {% endif %}
+            <div class="card-body media-card-body">
+              <h5 class="card-title media-title">{{ item.title }}</h5>
+              <p class="card-text media-info">
+                <small class="text-muted">Uploaded {{ item.created_at|timesince }} ago</small>
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Upload Media Form Section -->
+    <aside class="col-lg-4">
+      <div class="card upload-card shadow-sm">
+        <div class="card-header upload-header bg-primary text-white">
+          <h5 class="upload-title mb-0">Upload Media</h5>
+        </div>
+        <div class="card-body upload-body">
+          <form method="POST" enctype="multipart/form-data" class="upload-form">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.file.id_for_label }}" class="form-label">File:</label>
+                {{ form.file }}
+            </div>
+            <div class="mb-3" id="image-preview-container" style="display:none;">
+                <label class="form-label">Image Preview:</label>
+                <img id="image-preview" src="#" alt="Image Preview" class="img-fluid" style="max-height: 200px; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+            </div>
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            <button type="submit" class="btn btn-primary w-100 upload-btn mt-3">Upload</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Modal for Media Preview -->
+  <div class="modal fade" id="mediaModal" tabindex="-1" aria-labelledby="mediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content media-modal-content">
+        <div class="modal-header media-modal-header">
+          <h5 class="modal-title media-modal-title" id="mediaModalLabel">Media Preview</h5>
+          <button type="button" class="btn-close modal-x-close" data-bs-dismiss="modal" aria-label="Close">X</button>
+        </div>
+        <div class="modal-body media-modal-body">
+          <img src="" id="modalMediaImg" class="img-fluid modal-img" alt="Media Preview">
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  console.log("Media gallery JavaScript is running!");
+
+  // JavaScript for modal image preview
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOMContentLoaded event fired!");
+    var mediaModal = document.getElementById('mediaModal');
+    console.log("mediaModal element:", mediaModal);
+    if (mediaModal) {
+        mediaModal.addEventListener('show.bs.modal', function (event) {
+          console.log("show.bs.modal event listener triggered!");
+          var triggerElement = event.relatedTarget;
+          console.log("triggerElement:", triggerElement);
+          var imgSrc = triggerElement.getAttribute('data-img-src');
+          console.log("imgSrc from data-img-src:", imgSrc);
+          var modalImg = document.getElementById('modalMediaImg');
+          console.log("modalImg element:", modalImg);
+          modalImg.src = imgSrc;
+          console.log("modalImg.src set to:", imgSrc);
+        });
+    } else {
+        console.error("mediaModal element with ID 'mediaModal' not found!");
+    }
+  });
+
+  // JavaScript for upload image preview
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('{{ form.file.id_for_label }}');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+
+    fileInput.addEventListener('change', function() {
+      const file = fileInput.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreviewContainer.style.display = 'block';
+        }
+
+        reader.readAsDataURL(file);
+      } else {
+        imagePreview.src = '#';
+        imagePreviewContainer.style.display = 'none';
+      }
+    });
+  });
+</script>
+{% endblock %}

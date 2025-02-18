@@ -1,0 +1,42 @@
+{% extends 'social_app/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container profile-container my-4">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h1>{{ profile_user.get_full_name|default:profile_user.username }}'s Profile</h1>
+        </div>
+        <div class="profile-body">
+            <div class="profile-image-container">
+                <img src="{% if profile_user.profile.profile_pic %}{{ profile_user.profile.profile_pic.url }}{% else %}{% static 'images/65.jpg' %}{% endif %}"
+                     alt="Profile Picture"
+                     class="profile-pic1">
+            </div>
+
+            <div class="profile-info1">
+                <p class="profile-username"><strong>Username:</strong> @{{ profile_user.username }}</p>
+                <p class="profile-bio"><strong>Bio:</strong> {{ profile_user.profile.bio|default:"No bio available." }}</p>
+                <p class="profile-stats"><strong>Followers:</strong> <span class="stat-value">{{ profile_user.profile.followers.count }}</span></p>
+                <p class="profile-stats"><strong>Following:</strong> <span class="stat-value">{{ profile_user.profile.following.count }}</span></p>
+
+                {% if user.is_authenticated and user != profile_user %}
+                    <div class="follow-button-container">
+                        <form method="post" action="{% url 'follow_user' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ profile_user.id }}">
+                            <button type="submit" class="follow-button">
+                                {% if profile_user in user.profile.following.all %}
+                                    Unfollow
+                                {% else %}
+                                    Follow
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
